@@ -6,6 +6,7 @@ TagManager:
   tags:
   - ingredient
   - machne
+  - Enemy
   layers:
   - Default
   - TransparentFX
