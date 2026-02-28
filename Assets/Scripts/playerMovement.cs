@@ -1,6 +1,5 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement; // Useful if you want to check scene names
+using UnityEngine.InputSystem; // Required for the New Input System
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class playerMovement : MonoBehaviour
@@ -9,32 +8,27 @@ public class playerMovement : MonoBehaviour
     public float moveSpeed = 5f;
     public float movementSmoothing = 0.05f;
 
-    [Header("Scene Specific Abilities")]
-    public bool canJump = false; // Toggle this ON in the Inspector for the combat scene
-    public float jumpForce = 10f;
-    public float jumpCooldown = 0.5f;
-
     private Rigidbody2D rb;
     private Vector2 moveInput;
     private Vector2 currentVelocity;
-    private float lastJumpTime;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
-        rb.freezeRotation = true;
 
-        Debug.Log($"System: playerMovement initialized on {gameObject.name}. Can Jump: {canJump}");
+        // Ensure the player doesn't spin when hitting walls
+        rb.freezeRotation = true;
     }
 
     void Update()
     {
+        // New Input System way to read WASD/Arrows (Vector2)
+        // This polls the keyboard directly without needing an Input Action Asset
         moveInput = Vector2.zero;
 
         if (Keyboard.current != null)
         {
-            // 1. Standard Movement Input
             Vector2 rawInput = Vector2.zero;
             if (Keyboard.current.wKey.isPressed) rawInput.y += 1;
             if (Keyboard.current.sKey.isPressed) rawInput.y -= 1;
@@ -42,35 +36,18 @@ public class playerMovement : MonoBehaviour
             if (Keyboard.current.dKey.isPressed) rawInput.x += 1;
 
             moveInput = rawInput.normalized;
-
-            // 2. Scene-Specific Jump Logic
-            // Checks if ability is enabled, Space is pressed, and cooldown is over
-            if (canJump && Keyboard.current.spaceKey.wasPressedThisFrame && Time.time > lastJumpTime + jumpCooldown)
-            {
-                HandleJump();
-            }
         }
-    }
 
-    void HandleJump()
-    {
-        // Direction is based on where you are currently walking
-        // If standing still, we jump in the 'Up' direction by default
-        Vector2 jumpDir = moveInput != Vector2.zero ? moveInput : Vector2.up;
-
-        // Applying an instantaneous burst of force
-        rb.AddForce(jumpDir * jumpForce, ForceMode2D.Impulse);
-
-        lastJumpTime = Time.time;
-
-        Debug.Log($"Jumping forward in direction: {jumpDir} with force: {jumpForce}");
+        // Debugging logs
+        if (moveInput != Vector2.zero)
+        {
+            Debug.Log($"Moving: {moveInput}");
+        }
     }
 
     void FixedUpdate()
     {
         Vector2 targetVelocity = moveInput * moveSpeed;
-
-        // Using linearVelocity (Unity 6 specific)
         rb.linearVelocity = Vector2.SmoothDamp(rb.linearVelocity, targetVelocity, ref currentVelocity, movementSmoothing);
     }
 }
